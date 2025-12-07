@@ -1,0 +1,172 @@
+<!-- استدعاء البيانات -->
+<script src="https://elbotolaon-dotcom.github.io/botola-db/botola-data.js"></script>
+
+<style>
+    /* عزل النطاق */
+    #custom-botola-wrapper { font-family: sans-serif; direction: rtl; text-align: right; margin-top: 20px; }
+    
+    /* التبويبات */
+    .my-tabs { display: flex; gap: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+    .my-tab-btn { background: #f9f9f9; border: 1px solid #ddd; padding: 8px 20px; cursor: pointer; border-radius: 20px; font-weight: bold; transition: 0.3s; }
+    .my-tab-btn.active { background: #d2151e; color: #fff; border-color: #d2151e; }
+    .my-content { display: none; animation: fadeIn 0.5s; }
+    .my-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 1. جدول الترتيب */
+    .my-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
+    .my-table th { background: #f5f5f5; padding: 12px; color: #555; font-weight: bold; border-bottom: 2px solid #d2151e; }
+    .my-table td { padding: 10px; border-bottom: 1px solid #f0f0f0; text-align: center; }
+    .my-team-cell { display: flex; align-items: center; gap: 8px; }
+    .my-team-img { width: 25px; height: 25px; object-fit: contain; }
+    .rank-badge { display: inline-block; width: 22px; height: 22px; line-height: 22px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: bold; }
+    .bg-green { background: #28a745; } /* أخضر */
+    .bg-blue { background: #007bff; } /* أزرق */
+    .bg-red { background: #dc3545; } /* أحمر */
+    .bg-gray { background: #6c757d; } /* رمادي */
+    .form-dots span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin: 1px; }
+    .dot-w { background: #28a745; } .dot-d { background: #ffc107; } .dot-l { background: #dc3545; }
+
+    /* 2. التشكيلة (شبكة) */
+    .my-squad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+    .my-player { border: 1px solid #eee; border-radius: 8px; padding: 15px; text-align: center; background: #fff; transition: 0.3s; }
+    .my-player:hover { border-color: #d2151e; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .my-p-img { width: 60px; height: 60px; border-radius: 50%; border: 3px solid #f9f9f9; margin-bottom: 8px; object-fit: cover; }
+    .my-p-name { font-weight: bold; display: block; margin-bottom: 2px; }
+    .my-p-pos { font-size: 12px; color: #888; background: #f5f5f5; padding: 2px 8px; border-radius: 10px; }
+    .my-stats { display: flex; justify-content: center; gap: 10px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; font-size: 11px; }
+    .stat-item span { display: block; font-weight: bold; color: #d2151e; font-size: 14px; }
+
+    /* 3. الانتقالات */
+    .my-trans-list { display: flex; flex-direction: column; gap: 10px; }
+    .trans-card { display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 8px; }
+    .trans-info { display: flex; align-items: center; gap: 10px; }
+    .trans-arrow { color: #28a745; font-weight: bold; font-size: 18px; }
+    .team-mini { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; width: 50px; }
+    .team-mini img { width: 25px; height: 25px; }
+    .trans-type { font-size: 11px; background: #eef; color: #337; padding: 3px 8px; border-radius: 4px; }
+</style>
+
+<div id="custom-botola-wrapper">
+    <!-- الأزرار -->
+    <div class="my-tabs">
+        <button class="my-tab-btn active" onclick="swTab('tab-standings')">الترتيب</button>
+        <button class="my-tab-btn" onclick="swTab('tab-squad')">التشكيلة</button>
+        <button class="my-tab-btn" onclick="swTab('tab-transfers')">الانتقالات</button>
+    </div>
+
+    <!-- 1. الترتيب -->
+    <div id="tab-standings" class="my-content active">
+        <table class="my-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th style="text-align:right">الفريق</th>
+                    <th>لعب</th>
+                    <th>نقاط</th>
+                    <th>Form</th>
+                </tr>
+            </thead>
+            <tbody id="standings-body"></tbody>
+        </table>
+    </div>
+
+    <!-- 2. التشكيلة -->
+    <div id="tab-squad" class="my-content">
+        <div id="squad-grid" class="my-squad-grid"></div>
+    </div>
+
+    <!-- 3. الانتقالات -->
+    <div id="tab-transfers" class="my-content">
+        <div id="transfers-list" class="my-trans-list"></div>
+    </div>
+</div>
+
+<script>
+// دالة التبديل
+function swTab(id) {
+    document.querySelectorAll('.my-content').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.my-tab-btn').forEach(e => e.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+}
+
+// تحميل البيانات
+document.addEventListener("DOMContentLoaded", () => {
+    const waitData = setInterval(() => {
+        if (typeof botolaData !== 'undefined') {
+            clearInterval(waitData);
+
+            // 1. ملء الترتيب (مع الفرز والتلوين)
+            if(botolaData.standings) {
+                // ترتيب الفرق حسب النقاط (تنازلياً)
+                const sortedTeams = botolaData.standings.sort((a, b) => b.pts - a.pts);
+                
+                document.getElementById('standings-body').innerHTML = sortedTeams.map((t, i) => {
+                    let rank = i + 1;
+                    // تلوين المراكز
+                    let badgeClass = 'bg-gray';
+                    if (rank <= 2) badgeClass = 'bg-green';       // 1, 2
+                    else if (rank === 3) badgeClass = 'bg-blue';  // 3
+                    else if (rank >= 15) badgeClass = 'bg-red';   // 15, 16
+                    
+                    return `
+                    <tr>
+                        <td><span class="rank-badge ${badgeClass}">${rank}</span></td>
+                        <td>
+                            <div class="my-team-cell">
+                                <img src="${t.l}" class="my-team-img" onerror="this.src='https://via.placeholder.com/20'">
+                                <span>${t.team}</span>
+                            </div>
+                        </td>
+                        <td>${t.p}</td>
+                        <td><strong>${t.pts}</strong></td>
+                        <td class="form-dots">
+                            ${t.form ? t.form.map(f => `<span class="dot-${f}"></span>`).join('') : ''}
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // 2. ملء التشكيلة
+            if(botolaData.squad) {
+                document.getElementById('squad-grid').innerHTML = botolaData.squad.map(p => `
+                    <div class="my-player">
+                        <img src="${p.img}" class="my-p-img" onerror="this.src='https://via.placeholder.com/50'">
+                        <span class="my-p-name">${p.n}</span>
+                        <span class="my-p-pos">${p.p}</span>
+                        <div class="my-stats">
+                            <div class="stat-item"><span>${p.m}</span>مباراة</div>
+                            <div class="stat-item"><span>${p.g}</span>أهداف</div>
+                            <div class="stat-item"><span>${p.y}</span>إنذار</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 3. ملء الانتقالات
+            if(botolaData.transfers) {
+                document.getElementById('transfers-list').innerHTML = botolaData.transfers.map(tr => `
+                    <div class="trans-card">
+                        <div class="trans-info">
+                            <div class="team-mini">
+                                <img src="${tr.l_from}" onerror="this.src='https://via.placeholder.com/20'">
+                                <span>${tr.from}</span>
+                            </div>
+                            <span class="trans-arrow">➜</span>
+                            <div class="team-mini">
+                                <img src="${tr.l_to}" onerror="this.src='https://via.placeholder.com/20'">
+                                <span>${tr.to}</span>
+                            </div>
+                        </div>
+                        <div style="text-align:left">
+                            <strong>${tr.n}</strong>
+                            <div class="trans-type">${tr.type}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+    }, 300);
+});
+</script>
